@@ -1,0 +1,574 @@
+\documentclass[11pt]{article}
+
+% ----------------------------------------------------------------------------
+%  RSA and Shor's Algorithm — a detailed lesson
+%  Companion to IBM/shor.ipynb (and IQM/shor.ipynb) in the QC-Course repository.
+%  Compile with:  pdflatex rsa_shor_lesson.tex   (twice, for cross-references)
+% ----------------------------------------------------------------------------
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{graphicx}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black,citecolor=blue!55!black]{hyperref}
+
+% --- theorem environments ----------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{recipe}[theorem]{Recipe}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% --- a boxed recipe ----------------------------------------------------------
+\newtcolorbox{recipebox}[1]{colback=gray!4,colframe=black!60,
+  fonttitle=\bfseries,title={#1},breakable,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt}
+
+% --- handy macros ------------------------------------------------------------
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Zn}{(\Z/n\Z)^{\!*}}
+\newcommand{\gcdf}[2]{\gcd(#1,#2)}
+\newcommand{\ket}[1]{\lvert #1 \rangle}
+\newcommand{\bra}[1]{\langle #1 \rvert}
+\newcommand{\modN}{\ (\mathrm{mod}\ N)}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator{\ord}{ord}
+
+\title{\textbf{RSA and Shor's Algorithm}\\[2pt]
+\large From Number Theory to Quantum Factoring}
+\author{QC-Course 2026 --- lesson notes\\[2pt]
+\small companion to \texttt{IBM/shor.ipynb} and \texttt{IQM/shor.ipynb}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent These notes explain, from first principles, how \emph{asymmetric}
+(public-key) cryptography works, why RSA in particular is secure against classical
+computers, and how a quantum computer running \emph{Shor's algorithm} breaks it.
+We state and explain every number-theoretic theorem RSA relies on (Fermat, Euler,
+B\'ezout, the Chinese Remainder Theorem), prove that RSA decryption inverts
+encryption, and then build Shor's algorithm step by step: the reduction from
+factoring to order finding, quantum phase estimation of the modular-multiplication
+operator, and continued-fraction post-processing. Practical ``recipes'' and fully
+worked numerical examples accompany each step, and map directly onto the cells of
+the companion Jupyter notebook.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+% ============================================================================
+\section{Symmetric vs.\ asymmetric cryptography}
+% ============================================================================
+
+In a \emph{symmetric} cipher (AES, ChaCha20, \dots) the same secret key $k$ both
+encrypts and decrypts: $c = E_k(m)$, $m = D_k(c)$. This is fast, but it has a famous
+weakness --- the \emph{key-distribution problem}: before Alice and Bob can talk
+securely, they must already share $k$ over some secure channel. For $n$ mutually
+communicating parties one needs $\binom{n}{2}$ shared keys.
+
+\emph{Asymmetric} (public-key) cryptography, introduced by Diffie and Hellman (1976)
+and first realised concretely by Rivest, Shamir and Adleman (1977), removes this
+problem. Each party publishes a \textbf{public key} $\mathrm{pk}$ and keeps a
+\textbf{private key} $\mathrm{sk}$. Anyone can encrypt \emph{to} Bob using his public
+key, but only Bob --- holder of the matching private key --- can decrypt:
+\[
+  c = E_{\mathrm{pk}}(m), \qquad m = D_{\mathrm{sk}}(c).
+\]
+
+\begin{definition}[One-way and trapdoor functions]
+A function $f$ is \emph{one-way} if $y=f(x)$ is easy to compute but $x=f^{-1}(y)$ is
+computationally infeasible. It is a \emph{trapdoor} one-way function if there is extra
+secret information (the trapdoor) that makes inverting $f$ easy again.
+\end{definition}
+
+Public-key cryptography needs trapdoor one-way functions. For RSA the trapdoor is the
+\textbf{factorisation of the modulus}: multiplying two large primes $p,q$ to get
+$N=pq$ is easy, but recovering $p,q$ from $N$ is (classically) believed hard --- unless
+you know the trapdoor. Shor's algorithm destroys this asymmetry on a quantum computer.
+
+% ============================================================================
+\section{Number-theoretic background}
+% ============================================================================
+
+All of RSA lives in \emph{modular arithmetic}. We write $a \equiv b \pmod n$ to mean
+$n \mid (a-b)$, i.e.\ $a$ and $b$ leave the same remainder on division by $n$. The set
+of residues $\Z/n\Z = \{0,1,\dots,n-1\}$ is a commutative ring under $+$ and $\times$
+modulo $n$.
+
+\subsection{gcd, B\'ezout, and modular inverses}
+
+\begin{theorem}[B\'ezout's identity]\label{thm:bezout}
+For integers $a,b$ not both zero, there exist integers $x,y$ with
+\[
+  ax + by = \gcd(a,b).
+\]
+Moreover $x,y$ are computed in $O(\log \min(a,b))$ steps by the
+\emph{extended Euclidean algorithm}.
+\end{theorem}
+
+\begin{proof}[Idea]
+The set $S=\{ax+by : x,y\in\Z\}\cap \N_{>0}$ is non-empty; let $d=ax_0+by_0$ be its
+least element. Dividing $a$ by $d$ with remainder, $a=qd+r$ with $0\le r<d$, gives
+$r=a-qd=a(1-qx_0)-b(qy_0)\in S\cup\{0\}$. Minimality of $d$ forces $r=0$, so $d\mid a$
+and likewise $d\mid b$; hence $d\mid\gcd(a,b)$. Conversely $\gcd(a,b)\mid d$ because it
+divides every term $ax+by$. Thus $d=\gcd(a,b)$.
+\end{proof}
+
+\begin{corollary}[Existence of modular inverses]\label{cor:inverse}
+An element $a\in\Z/n\Z$ has a multiplicative inverse (an $a^{-1}$ with
+$a\,a^{-1}\equiv 1 \pmod n$) \textbf{iff} $\gcd(a,n)=1$. The inverse is the coefficient
+$x$ in B\'ezout's identity $ax+ny=1$, reduced modulo $n$.
+\end{corollary}
+
+This corollary is exactly what lets us turn the public exponent $e$ into the private
+exponent $d$ in RSA: $d \equiv e^{-1} \pmod{\varphi(N)}$.
+
+\begin{definition}[Group of units]
+The \emph{units} of $\Z/n\Z$ are the invertible residues,
+$\Zn = \{\, a : 1\le a\le n,\ \gcd(a,n)=1 \,\}$.
+This is an abelian group under multiplication modulo $n$.
+\end{definition}
+
+\subsection{Euler's totient function}
+
+\begin{definition}[Euler's totient]
+$\varphi(n) = \bigl|\Zn\bigr|$ is the number of integers in $\{1,\dots,n\}$ coprime
+to $n$.
+\end{definition}
+
+\begin{proposition}[Totient of a product of distinct primes]\label{prop:phi}
+If $p\neq q$ are primes then $\varphi(pq) = (p-1)(q-1)$. More generally $\varphi$ is
+\emph{multiplicative}: $\varphi(mn)=\varphi(m)\varphi(n)$ whenever $\gcd(m,n)=1$, and
+$\varphi(p)=p-1$ for a prime $p$.
+\end{proposition}
+
+\begin{proof}[Sketch]
+Among $\{1,\dots,pq\}$ the numbers \emph{not} coprime to $pq$ are the $q$ multiples of
+$p$ and the $p$ multiples of $q$, with the single number $pq$ counted twice. Hence
+$\varphi(pq)=pq-p-q+1=(p-1)(q-1)$. Multiplicativity follows from the Chinese Remainder
+Theorem below, which gives a ring isomorphism
+$\Z/mn\Z\cong \Z/m\Z\times\Z/n\Z$ and hence a bijection of unit groups.
+\end{proof}
+
+\subsection{Fermat's little theorem and Euler's theorem}
+
+\begin{theorem}[Fermat's little theorem]\label{thm:fermat}
+If $p$ is prime and $p\nmid a$, then $a^{p-1}\equiv 1 \pmod p$. Equivalently,
+$a^{p}\equiv a \pmod p$ for \emph{every} integer $a$.
+\end{theorem}
+
+\begin{theorem}[Euler's theorem]\label{thm:euler}
+If $\gcd(a,n)=1$ then
+\[
+  a^{\varphi(n)} \equiv 1 \pmod n .
+\]
+\end{theorem}
+
+\begin{proof}
+Work in the finite abelian group $\Zn$ of order $\varphi(n)$. By Lagrange's theorem the
+order of any element divides the order of the group, so $a^{\varphi(n)}=1$ in $\Zn$,
+i.e.\ $a^{\varphi(n)}\equiv 1 \pmod n$. (Fermat's little theorem is the special case
+$n=p$ prime, where $\varphi(p)=p-1$.) \end{proof}
+
+Euler's theorem is the engine of RSA: raising to the power $\varphi(N)$ acts like the
+identity on units, so exponents can be reduced modulo $\varphi(N)$.
+
+\subsection{The Chinese Remainder Theorem}
+
+\begin{theorem}[CRT]\label{thm:crt}
+If $\gcd(m,n)=1$, the system $x\equiv a \pmod m,\ x\equiv b \pmod n$ has a unique
+solution modulo $mn$. Equivalently, the map
+\[
+  \Z/mn\Z \;\longrightarrow\; \Z/m\Z \times \Z/n\Z, \qquad
+  x \longmapsto (x \bmod m,\ x\bmod n)
+\]
+is a ring isomorphism.
+\end{theorem}
+
+CRT is used both to \emph{prove} RSA correct (Section~\ref{sec:rsa-correct}) and to
+\emph{speed it up} in practice (decrypting modulo $p$ and $q$ separately is $\sim 4\times$
+faster than modulo $N$).
+
+% ============================================================================
+\section{The RSA cryptosystem}
+% ============================================================================
+
+\subsection{Key generation, encryption, decryption}
+
+\begin{recipebox}{Recipe R1 --- RSA key generation}
+\begin{enumerate}[leftmargin=2.2em,itemsep=1pt,topsep=3pt]
+  \item Choose two large distinct primes $p,q$ (e.g.\ 1024 bits each for a 2048-bit key).
+  \item Compute the modulus $N = pq$ and the totient $\varphi(N) = (p-1)(q-1)$.
+  \item Choose a public exponent $e$ with $1<e<\varphi(N)$ and $\gcd(e,\varphi(N))=1$
+        (commonly $e=65537$).
+  \item Compute the private exponent $d \equiv e^{-1} \pmod{\varphi(N)}$ via the
+        extended Euclidean algorithm (Corollary~\ref{cor:inverse}).
+  \item \textbf{Public key} $\mathrm{pk}=(N,e)$. \quad
+        \textbf{Private key} $\mathrm{sk}=(N,d)$. \\
+        Discard (or guard) $p,q,\varphi(N)$ --- knowing any of them breaks the scheme.
+\end{enumerate}
+\end{recipebox}
+
+For a message represented as an integer $m$ with $0\le m<N$:
+\[
+  \text{(encrypt)}\quad c = m^{e} \bmod N,
+  \qquad\qquad
+  \text{(decrypt)}\quad m = c^{d} \bmod N.
+\]
+
+\subsection{Why decryption works}\label{sec:rsa-correct}
+
+\begin{theorem}[RSA correctness]\label{thm:rsa}
+With the parameters of Recipe~R1, for every integer $m$ with $0\le m<N$,
+\[
+  (m^{e})^{d} \equiv m \pmod N .
+\]
+\end{theorem}
+
+\begin{proof}
+By construction $ed\equiv 1 \pmod{\varphi(N)}$, so $ed = 1 + k\varphi(N)$ for some
+integer $k\ge 0$, where $\varphi(N)=(p-1)(q-1)$. We show $m^{ed}\equiv m$ modulo each
+prime and combine with CRT (Theorem~\ref{thm:crt}).
+
+\emph{Modulo $p$.} If $p\mid m$ then $m^{ed}\equiv 0\equiv m \pmod p$. Otherwise
+$\gcd(m,p)=1$, and Fermat's little theorem (Theorem~\ref{thm:fermat}) gives
+$m^{p-1}\equiv 1\pmod p$. Since $(p-1)\mid \varphi(N)$,
+\[
+  m^{ed}=m^{1+k\varphi(N)}
+       = m\cdot\bigl(m^{\,p-1}\bigr)^{k(q-1)}
+       \equiv m\cdot 1^{\,k(q-1)} = m \pmod p .
+\]
+\emph{Modulo $q$.} The same argument gives $m^{ed}\equiv m \pmod q$.
+
+Since $p\neq q$ are coprime and $m^{ed}-m$ is divisible by both $p$ and $q$, it is
+divisible by $N=pq$; hence $m^{ed}\equiv m \pmod N$.
+\end{proof}
+
+\subsection{A fully worked (small) example}
+
+\begin{example}[RSA by hand]\label{ex:rsa}
+Take $p=5$, $q=11$. Then
+\[
+  N = 55, \qquad \varphi(N) = (5-1)(11-1) = 40 .
+\]
+Choose $e=3$ (indeed $\gcd(3,40)=1$). The private exponent solves $3d\equiv 1 \pmod{40}$;
+since $3\cdot 27 = 81 = 2\cdot 40 + 1$, we get $d=27$.
+\[
+  \mathrm{pk}=(55,3),\qquad \mathrm{sk}=(55,27).
+\]
+Encrypt $m=7$:
+\[
+  c = 7^{3}\bmod 55 = 343 \bmod 55 = 13 .
+\]
+Decrypt $c=13$ (using CRT to keep the numbers small):
+\[
+  13 \equiv 3 \!\!\pmod 5,\quad 3^{27}\equiv 3^{27 \bmod 4}=3^{3}=27\equiv 2\!\!\pmod 5;
+\]
+\[
+  13 \equiv 2 \!\!\pmod{11},\quad 2^{27}\equiv 2^{27 \bmod 10}=2^{7}=128\equiv 7\!\!\pmod{11}.
+\]
+CRT reassembles $x\equiv 2 \pmod 5$, $x\equiv 7 \pmod{11}$ into $x=7$. Decryption
+returns the original $m=7$. \checkmark
+\end{example}
+
+\begin{remark}[The textbook ``big'' example]
+The classic RSA example (and the one in \texttt{RSA example.ipynb}) uses $p=61$, $q=53$,
+so $N=3233$, $\varphi(N)=3120$, $e=17$, $d=2753$. Encrypting $m=65$ gives
+$c=65^{17}\bmod 3233 = 2790$, and $2790^{2753}\bmod 3233 = 65$ again.
+\end{remark}
+
+\subsection{Security: what an attacker must do}
+
+\begin{proposition}[Knowing $\varphi(N)$ is as hard as factoring]\label{prop:phi-fact}
+Given $N=pq$, recovering $\varphi(N)=(p-1)(q-1)$ is computationally equivalent to
+factoring $N$.
+\end{proposition}
+
+\begin{proof}
+If $p,q$ are known, $\varphi(N)$ is immediate. Conversely, from $N=pq$ and
+$\varphi(N)=N-(p+q)+1$ we recover $p+q=N-\varphi(N)+1=:s$. Then $p,q$ are the roots of
+$t^{2}-st+N=0$, i.e.\ $p,q=\tfrac12\bigl(s\pm\sqrt{s^{2}-4N}\bigr)$ --- a constant-time
+computation. \end{proof}
+
+Thus the entire security of RSA rests on the presumed hardness of the
+\textbf{integer-factorisation problem} (and the slightly weaker ``RSA problem'':
+computing $e$-th roots modulo $N$). No efficient \emph{classical} factoring algorithm
+is known; the best general method, the General Number Field Sieve, runs in
+sub-exponential but super-polynomial time $\exp\!\big(O(\log N)^{1/3}(\log\log N)^{2/3}\big)$.
+
+\begin{remark}[Textbook vs.\ real RSA]
+``Textbook RSA'' as above is deterministic and therefore \emph{insecure} in practice
+(equal messages give equal ciphertexts, small $m$ with small $e$ may satisfy $m^e<N$ so
+$c=m^e$ exactly, etc.). Real deployments use randomised padding (RSA-OAEP for
+encryption, RSA-PSS for signatures) and $e=65537$. These do not change the number
+theory above; they protect against structural attacks.
+\end{remark}
+
+% ============================================================================
+\section{Shor's algorithm}
+% ============================================================================
+
+Shor's algorithm (1994) factors $N$ in time polynomial in $\log N$ on a quantum
+computer, breaking RSA asymptotically. Its heart is a purely classical reduction
+(factoring $\to$ order finding) wrapped around one quantum subroutine (order finding
+via phase estimation).
+
+\subsection{Step 1 --- Reduce factoring to order finding}
+
+\begin{definition}[Multiplicative order]
+For $a$ with $\gcd(a,N)=1$, the \emph{order} $r=\ord_N(a)$ is the smallest positive
+integer with $a^{r}\equiv 1 \pmod N$.
+\end{definition}
+
+\begin{theorem}[Order finding yields factors]\label{thm:order-factor}
+Let $N$ be odd and composite, $a$ coprime to $N$ with order $r$. If
+\begin{enumerate}[label=(\roman*),leftmargin=2.4em,itemsep=0pt,topsep=2pt]
+  \item $r$ is \textbf{even}, and
+  \item $a^{r/2}\not\equiv -1 \pmod N$ \ (note $a^{r/2}\not\equiv +1$ automatically, by
+        minimality of $r$),
+\end{enumerate}
+then $\gcd\!\big(a^{r/2}-1,\,N\big)$ and $\gcd\!\big(a^{r/2}+1,\,N\big)$ are
+\textbf{non-trivial factors} of $N$.
+\end{theorem}
+
+\begin{proof}
+Set $x=a^{r/2}\bmod N$. Then $x^{2}=a^{r}\equiv 1$, so
+\[
+  N \mid x^{2}-1 = (x-1)(x+1).
+\]
+If $N$ divided $x-1$ we would have $x\equiv 1$, contradicting minimality of $r$; if $N$
+divided $x+1$ we would have $x\equiv -1$, excluded by (ii). Hence $N$ divides the product
+$(x-1)(x+1)$ but neither factor alone, so its prime factors are split between the two.
+Therefore $\gcd(x-1,N)$ is a proper divisor $>1$ of $N$ (and so is $\gcd(x+1,N)$).
+\end{proof}
+
+\begin{lemma}[The gamble usually pays off]\label{lem:prob}
+If $N$ has $k$ distinct odd prime factors and $a$ is drawn uniformly from $\Zn$, then
+conditions (i)--(ii) of Theorem~\ref{thm:order-factor} both hold with probability at
+least $1-2^{-k}\ge \tfrac12$.
+\end{lemma}
+
+So on average two or three random choices of $a$ suffice; if $a$ fails, pick another.
+
+\subsection{Step 2 --- Compute the order on a quantum computer}
+
+The only hard step is finding $r=\ord_N(a)$. Classically this is as hard as factoring;
+quantumly it is \emph{easy}, via Quantum Phase Estimation (QPE) of the operator
+\[
+  U\ket{y} = \ket{ay \bmod N}, \qquad y\in\{0,1,\dots,N-1\}.
+\]
+$U$ is unitary (multiplication by $a$ permutes the residues coprime to $N$).
+
+\begin{proposition}[Eigenstructure of $U$]\label{prop:eig}
+For each $s\in\{0,1,\dots,r-1\}$ the state
+\[
+  \ket{u_s} = \frac{1}{\sqrt r}\sum_{k=0}^{r-1} e^{-2\pi i\, s k / r}\,\ket{a^{k}\bmod N}
+\]
+is an eigenvector of $U$ with eigenvalue $e^{2\pi i\, s/r}$:
+\[
+  U\ket{u_s} = e^{2\pi i\, s/r}\ket{u_s}.
+\]
+Moreover
+\[
+  \frac{1}{\sqrt r}\sum_{s=0}^{r-1}\ket{u_s} = \ket{1}.
+\]
+\end{proposition}
+
+\begin{proof}[Idea]
+Applying $U$ shifts $a^{k}\mapsto a^{k+1}$ in the sum, which is equivalent to multiplying
+the whole state by $e^{2\pi i s/r}$ after re-indexing (the phases were chosen precisely so
+that this works). Summing $\ket{u_s}$ over $s$, the phase factors
+$\sum_s e^{-2\pi i s k/r}$ vanish for $k\not\equiv 0$ and reinforce for $k=0$, leaving only
+$\ket{a^{0}}=\ket{1}$. \end{proof}
+
+The eigenphase of each $\ket{u_s}$ is $\phi_s = s/r$ --- it \emph{contains the order}. Two
+facts make this usable:
+\begin{itemize}[leftmargin=1.6em,itemsep=1pt,topsep=2pt]
+  \item We cannot prepare a single $\ket{u_s}$ (we don't know $r$), but we \emph{can}
+        prepare $\ket{1}=\tfrac{1}{\sqrt r}\sum_s\ket{u_s}$ trivially.
+  \item Running QPE on $U$ with input $\ket{1}$ therefore measures a phase
+        $\phi\approx s/r$ for a \textbf{uniformly random} $s\in\{0,\dots,r-1\}$.
+\end{itemize}
+
+\paragraph{The QPE circuit.} With $t$ \emph{counting} qubits (initialised to
+$\ket{+}^{\otimes t}$) and a work register holding $\ket{1}$, apply controlled
+$U^{2^{0}},U^{2^{1}},\dots,U^{2^{t-1}}$, then the inverse Quantum Fourier Transform on the
+counting register, then measure it. The read-out integer $y$ estimates
+$\phi\approx y/2^{t}\approx s/r$. Using $t\approx 2\log_2 N + 1$ counting qubits makes the
+estimate sharp enough that continued fractions recover $r$ with constant probability.
+
+\subsection{Step 3 --- Recover $r$ by continued fractions}
+
+QPE returns a binary fraction $\phi=y/2^{t}$ close to the rational $s/r$. We need $s/r$ in
+lowest terms.
+
+\begin{theorem}[Continued-fraction recovery]\label{thm:cf}
+If a rational $s/r$ with $0\le s<r\le N$ is approximated by $\phi$ to within
+$|\,\phi - s/r\,| \le \dfrac{1}{2r^{2}}$, then $s/r$ is one of the \emph{convergents} of
+the continued-fraction expansion of $\phi$, and is found in $O(\log N)$ steps.
+\end{theorem}
+
+In code this is a single call: \verb|Fraction(phi).limit_denominator(N)| returns the best
+rational approximation to $\phi$ with denominator $\le N$ --- exactly the convergent
+guaranteed above. The denominator of that fraction is the candidate for $r$.
+
+\begin{remark}[Why the algorithm is probabilistic]
+Three things can go wrong on a given run: the random $s$ may be $0$ (useless), $s$ and $r$
+may share a factor (we then recover a \emph{divisor} of $r$, not $r$ itself), or the
+recovered $r$ may be odd / give $a^{r/2}\equiv-1$. Each failure is detected cheaply
+($a^{r}\stackrel{?}{\equiv}1$, and the gcd test), and we simply repeat. A constant number
+of repetitions gives any desired success probability.
+\end{remark}
+
+\subsection{The complete recipe}
+
+\begin{recipebox}{Recipe S1 --- Shor's factoring algorithm for $N$}
+\begin{enumerate}[leftmargin=2.2em,itemsep=1pt,topsep=3pt]
+  \item \textbf{Classical shortcuts.} If $N$ is even, output $2$. If $N=c^{b}$ is a perfect
+        power (checkable classically), output $c$.
+  \item Pick a random $a\in\{2,\dots,N-1\}$. Compute $g=\gcd(a,N)$.
+        If $g>1$, output $g$ (a lucky factor).
+  \item \textbf{Quantum order finding.} Use QPE on $U\ket{y}=\ket{ay\bmod N}$ with input
+        $\ket{1}$ to measure $\phi\approx s/r$.
+  \item \textbf{Continued fractions.} Set $r=\operatorname{denominator}$ of
+        $\texttt{limit\_denominator}(\phi,\,N)$ (Theorem~\ref{thm:cf}).
+        Verify $a^{r}\equiv 1 \pmod N$; if not, go to step 2.
+  \item \textbf{Extract factors.} If $r$ is even and $a^{r/2}\not\equiv -1 \pmod N$, output
+        $\gcd(a^{r/2}\pm1,\,N)$ (Theorem~\ref{thm:order-factor}). Otherwise go to step 2.
+\end{enumerate}
+\end{recipebox}
+
+\subsection{Worked quantum examples}
+
+\begin{example}[Factoring $N=15$ with $a=7$]\label{ex:15}
+The order of $7$ modulo $15$ is $r=4$ (since $7^{1}=7,\,7^{2}=49\equiv4,\,7^{3}\equiv13,\,
+7^{4}\equiv1$). QPE with $t=8$ counting qubits returns one of the phases
+$\phi\in\{0,\tfrac14,\tfrac12,\tfrac34\}$, i.e.\ register values $\{0,64,128,192\}$ out of
+$256$. Taking $\phi=\tfrac34$: \verb|Fraction(0.75).limit_denominator(15)|$=3/4$, so $r=4$.
+Then
+\[
+  a^{r/2}=7^{2}=49\equiv 4 \pmod{15},\quad
+  \gcd(4-1,15)=3,\quad \gcd(4+1,15)=5.
+\]
+We recover $15 = 3\times 5$. (The outcomes $\phi=0$ and $\phi=\tfrac12$ fail and are
+retried --- this is exactly the histogram you see in the notebook.)
+\end{example}
+
+\begin{example}[Factoring $N=21$ with $a=2$]\label{ex:21}
+Powers of $2$ mod $21$: $2,4,8,16,11,1$, so $r=6$ (even). Then
+$a^{r/2}=2^{3}=8$, and
+\[
+  \gcd(8-1,21)=\gcd(7,21)=7,\qquad \gcd(8+1,21)=\gcd(9,21)=3,
+\]
+giving $21 = 3\times 7$.
+\end{example}
+
+\begin{example}[Breaking the toy RSA key of Example~\ref{ex:rsa} by factoring]
+Suppose an attacker sees only the public key $(N,e)=(55,3)$ and the ciphertext $c=13$.
+Running Recipe~S1 on $N=55$ recovers $p=5,q=11$. Then
+$\varphi(N)=40$, $d\equiv 3^{-1}\equiv 27 \pmod{40}$, and
+$m = c^{d}\bmod N = 13^{27}\bmod 55 = 7$. The private key --- and the message --- are
+recovered purely from public data. This is the attack \texttt{shor.ipynb} performs on a
+simulator in its ``breaking RSA'' section.
+\end{example}
+
+\subsection{The bottleneck: modular exponentiation}
+
+The controlled-$U^{2^{j}}$ gates dominate the cost. We never build $U^{2^{j}}$ by repeating
+$U$ a full $2^{j}$ times (that is exponential); instead
+$a^{2^{j}}\bmod N$ is precomputed \emph{classically} by repeated squaring in $O(j)$
+multiplications, and the modular multiplier is realised as a reversible circuit. Beauregard's
+construction factors an $n$-bit $N$ with only $2n+3$ qubits and $O(n^{3})$ gates.
+
+\begin{theorem}[Complexity of Shor's algorithm]
+Order finding, and hence factoring $N$, succeeds with constant probability using
+$O(\log N)$ qubits and $\widetilde{O}\big((\log N)^{2}\big)$ quantum gates per run (dominated
+by modular exponentiation), plus $O((\log N)^{3})$ classical post-processing --- polynomial
+in the input size $\log N$.
+\end{theorem}
+
+\subsection{Reality check and post-quantum cryptography}
+
+Although Shor's algorithm is polynomial, the \emph{constants} and the cost of quantum error
+correction are enormous. The widely cited estimate of Gidney and Eker\aa\ (2019) puts the
+cost of factoring a 2048-bit RSA modulus at roughly $20$ million \emph{noisy physical} qubits
+running for about $8$ hours, corresponding to a few thousand logical (error-corrected) qubits.
+Today's devices --- including IQM \emph{Garnet} (20 qubits) and \emph{Emerald} (54 qubits), and
+the largest superconducting chips (a few hundred physical qubits) --- are many orders of
+magnitude short of this. Hence the companion notebooks factor $15$ and $21$, not real keys.
+
+The threat is nevertheless taken seriously (``harvest now, decrypt later''), which is why NIST
+has standardised \textbf{post-quantum} schemes whose security does \emph{not} reduce to
+factoring or discrete logs --- notably the lattice-based ML-KEM (Kyber) and ML-DSA (Dilithium).
+
+% ============================================================================
+\section{From the lesson to the notebook}
+% ============================================================================
+
+The companion notebook \texttt{shor.ipynb} realises this lesson cell by cell:
+\begin{itemize}[leftmargin=1.6em,itemsep=1pt,topsep=2pt]
+  \item \S2 $\leftrightarrow$ \texttt{factors\_from\_order}: Theorem~\ref{thm:order-factor}
+        in code.
+  \item \S4.2 $\leftrightarrow$ \texttt{build\_order\_finding\_circuit},
+        \texttt{c\_amod15}, \texttt{qft\_dagger}: the QPE circuit of
+        Proposition~\ref{prop:eig}.
+  \item \S4.3 $\leftrightarrow$ \texttt{best\_rational} / \texttt{limit\_denominator}:
+        continued-fraction recovery (Theorem~\ref{thm:cf}).
+  \item Recipe~S1 $\leftrightarrow$ \texttt{shor\_factor(N)}: the full loop.
+  \item Example~\ref{ex:rsa} and the ``breaking RSA'' cell $\leftrightarrow$
+        Theorem~\ref{thm:rsa} and Proposition~\ref{prop:phi-fact}.
+\end{itemize}
+Run it on the Aer simulator (\texttt{IBM/shor.ipynb}) or on IQM Garnet/Emerald
+(\texttt{IQM/shor.ipynb}) by changing a single \texttt{TARGET} line.
+
+% ============================================================================
+\section*{Exercises}
+% ============================================================================
+\addcontentsline{toc}{section}{Exercises}
+\begin{enumerate}[leftmargin=2em,itemsep=2pt]
+  \item Compute $\varphi(561)$ and verify that $561=3\cdot 11\cdot 17$ is a Carmichael
+        number ($a^{560}\equiv1$ for all $a$ coprime to $561$, yet $561$ is composite).
+  \item For $p=7,q=13$ build an RSA key with $e=5$; find $d$ and encrypt/decrypt $m=9$.
+  \item Prove that if $e$ is chosen with $\gcd(e,\varphi(N))\neq 1$ then $d$ need not exist,
+        and explain why Recipe~R1 step~3 forbids it.
+  \item In Example~\ref{ex:15}, which measured phases $\phi$ \emph{fail} to produce a factor,
+        and why? Relate your answer to the Remark on probabilistic failure.
+  \item Factor $N=35$ by hand using $a=3$ ($r=12$): show $\gcd(3^{6}\pm1,35)$ gives
+        $\{5,7\}$.
+\end{enumerate}
+
+% ============================================================================
+\begin{thebibliography}{9}
+\addcontentsline{toc}{section}{References}
+\bibitem{rsa} R.~Rivest, A.~Shamir, L.~Adleman,
+  \emph{A Method for Obtaining Digital Signatures and Public-Key Cryptosystems},
+  Comm.\ ACM \textbf{21} (1978) 120--126.
+\bibitem{shor} P.~W.~Shor,
+  \emph{Polynomial-Time Algorithms for Prime Factorization and Discrete Logarithms on a
+  Quantum Computer}, SIAM J.\ Comput.\ \textbf{26} (1997) 1484;
+  \href{https://arxiv.org/abs/quant-ph/9508027}{arXiv:quant-ph/9508027}.
+\bibitem{nc} M.~A.~Nielsen and I.~L.~Chuang,
+  \emph{Quantum Computation and Quantum Information}, Cambridge Univ.\ Press (2000), Ch.~5.
+\bibitem{beauregard} S.~Beauregard,
+  \emph{Circuit for Shor's algorithm using $2n+3$ qubits},
+  \href{https://arxiv.org/abs/quant-ph/0205095}{arXiv:quant-ph/0205095}.
+\bibitem{gidney} C.~Gidney and M.~Eker\aa,
+  \emph{How to factor 2048 bit RSA integers in 8 hours using 20 million noisy qubits},
+  Quantum \textbf{5} (2021) 433; \href{https://arxiv.org/abs/1905.09749}{arXiv:1905.09749}.
+\end{thebibliography}
+
+\end{document}
