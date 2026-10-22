@@ -27,3 +27,12 @@ pdflatex rsa_shor_lesson.tex   # second pass resolves cross-references / ToC
 ```
 
 Produces `rsa_shor_lesson.pdf` (9 pages).
+
+## Lecture deck
+
+`RSA_Shor_lecture.pptx` — 30 slides (English) for MSc Physics students, following the
+lesson: number theory → RSA (incl. why `e = 65537`) → Shor (reduction, QPE, continued
+fractions) → N = 15 / 21 demos, noisy-hardware results, resource reality check, PQC.
+Built on the course template `Quantum Computing - Course - 2025-26.pptx`; equations are
+native PowerPoint objects; speaker notes on every slide. `deck_src/` holds the generator
+and figures (see its README) — or just edit the deck in PowerPoint.

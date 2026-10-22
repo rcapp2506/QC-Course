@@ -10,8 +10,11 @@ IBM/      the original course notebooks on the IBM Qiskit stack
           (qiskit, qiskit-aer, qiskit-ibm-runtime), with fixes applied.
 IQM/      the same notebooks re-backended for IQM Garnet (20q) & Emerald (54q)
           on IQM Resonance; shared helper iqm_backend.py + README.
-lesson/   rsa_shor_lesson.tex — a detailed lesson on RSA and Shor's algorithm,
-          companion to IBM/shor.ipynb and IQM/shor.ipynb.
+lesson/   rsa_shor_lesson.tex (+ PDF) — a detailed lesson on RSA and Shor's algorithm,
+          companion to IBM/shor.ipynb and IQM/shor.ipynb;
+          RSA_Shor_lecture.pptx — the lecture deck (MSc Physics), built on the course
+          template; deck_src/ regenerates it.
+qc-2025-26/  archive: the original 2025-26 notebooks, untouched.
 ```
 
 ## Quick start
@@ -37,6 +40,8 @@ See `IQM/README.md` for the full backend-selection table (local fake sim → clo
   a robust `shor_factor(N)` → **breaking a toy RSA key**. Verified to run on Qiskit/Aer.
 - **`lesson/rsa_shor_lesson.tex`** — the theory behind it, with all theorems stated and
   explained, worked examples, and a step-by-step Shor recipe.
+- **`lesson/RSA_Shor_lecture.pptx`** — 30-slide lecture deck on the same material, with
+  native (editable) equations and links to the demo notebooks.
 
 ## What changed per folder
 
