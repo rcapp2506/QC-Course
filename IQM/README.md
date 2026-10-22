@@ -43,13 +43,16 @@ TARGET = "fake_apollo"     # change this one line to choose the backend
 |---|---|---|---|
 | `"fake_apollo"`  | local 20-qubit noisy simulator | no  | no  |
 | `"fake_adonis"`  | local 5-qubit noisy simulator  | no  | no  |
-| `"garnet:mock"`  | cloud simulator of Garnet      | yes | no  |
-| `"emerald:mock"` | cloud simulator of Emerald     | yes | no  |
+| `"garnet:mock"`  | cloud mock of Garnet (random bitstrings, pipeline check only) | yes | no  |
+| `"emerald:mock"` | cloud mock of Emerald (random bitstrings, pipeline check only) | yes | no  |
 | `"garnet"`       | **real Garnet QPU** (20q)      | yes | yes |
 | `"emerald"`      | **real Emerald QPU** (54q)     | yes | yes |
 
-Develop with `"fake_apollo"` (free, offline), validate with `"garnet:mock"`,
-then switch to `"garnet"` / `"emerald"` for a real run.
+Develop and validate logic with `"fake_apollo"` (free, offline, noisy physics simulation).
+Use `"garnet:mock"` to check the cloud pipeline end to end (token, transpilation to the
+live calibration set, instruction limit, job submission) — but note that the `:mock`
+targets return **random bitstrings**, not simulated outcomes (a Bell circuit gives all four
+results with equal weight). Then switch to `"garnet"` / `"emerald"` for a real run.
 
 ## Running a circuit (the one pattern used everywhere)
 
@@ -86,7 +89,13 @@ Framework-neutral construction notebooks (`operators`, `measurement`,
 `saving_to_disk`) build Qiskit circuits that are already backend-agnostic; they carry
 an IQM header cell explaining how to run them on Garnet/Emerald with the helper above.
 
+> **Note on circuit size.** IQM Resonance declines any job whose transpiled circuit has
+> more than **10 000 native instructions** (`run_counts` checks this and raises before
+> submitting). The Shor notebooks therefore compute $a^{2^q} \bmod 15$ classically and
+> apply one controlled multiplication per counting qubit (~650 native instructions),
+> instead of repeating $U$ $2^q$ times (~70 000).
+>
 > **Note on qubit counts.** Shor/QPE with 8 counting qubits use 12 qubits — fine on
 > Garnet (20) and Emerald (54). Deep circuits like Shor will be noisy on today's
-> hardware; use the mock/fake targets to verify logic, and expect the characteristic
+> hardware; use `fake_apollo` to verify logic, and expect the characteristic
 > spreading of the measured-phase histogram on the real QPU.

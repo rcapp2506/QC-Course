@@ -7,8 +7,12 @@ three ways, controlled by a single string:
 
     target = "fake_apollo"   -> local noisy simulator, 20 qubits, NO token needed
     target = "fake_adonis"   -> local noisy simulator,  5 qubits, NO token needed
-    target = "garnet:mock"   -> IQM Resonance CLOUD simulator of Garnet (needs token, no QPU time)
-    target = "emerald:mock"  -> IQM Resonance CLOUD simulator of Emerald (needs token, no QPU time)
+    target = "garnet:mock"   -> IQM Resonance CLOUD MOCK of Garnet  (needs token, no QPU time)
+    target = "emerald:mock"  -> IQM Resonance CLOUD MOCK of Emerald (needs token, no QPU time)
+                                NOTE: the :mock targets validate the whole job pipeline
+                                (token, transpilation, connectivity, instruction limit) but
+                                return RANDOM bitstrings, not simulated physics. Verify the
+                                logic of a circuit with fake_apollo / fake_adonis instead.
     target = "garnet"        -> REAL Garnet  QPU (20 qubits) on IQM Resonance  (needs token + QPU credits)
     target = "emerald"       -> REAL Emerald QPU (54 qubits) on IQM Resonance  (needs token + QPU credits)
 
@@ -32,6 +36,7 @@ from __future__ import annotations
 import os
 
 RESONANCE_URL = "https://resonance.iqm.tech"
+RESONANCE_MAX_INSTRUCTIONS = 10_000   # server-side cap per circuit (native instructions)
 
 
 def get_backend(target: str = "fake_apollo", token: str | None = None):
@@ -43,15 +48,20 @@ def get_backend(target: str = "fake_apollo", token: str | None = None):
 
     # --- IQM Resonance (cloud mock OR real QPU) ---------------------------------
     from iqm.qiskit_iqm import IQMProvider
-    token = token or os.environ.get("IQM_TOKEN")
-    if token is None:
+    # iqm-client reads the token from the IQM_TOKEN environment variable by itself and
+    # refuses to receive it from BOTH a `token=` argument and the env var at the same time
+    # ("Parameter sources must not be mixed"). So we funnel an explicit token into the
+    # env var and never pass `token=` to IQMProvider.
+    if token is not None:
+        os.environ["IQM_TOKEN"] = token
+    if not os.environ.get("IQM_TOKEN"):
         raise RuntimeError(
             f"target='{target}' needs an IQM Resonance token. Set the IQM_TOKEN "
             "environment variable or pass token=... . Get it from "
             "https://resonance.iqm.tech/ . For offline testing use "
             "target='fake_apollo' (no token required)."
         )
-    provider = IQMProvider(RESONANCE_URL, quantum_computer=target, token=token)
+    provider = IQMProvider(RESONANCE_URL, quantum_computer=target)
     return provider.get_backend()
 
 
@@ -72,6 +82,22 @@ def run_counts(circuit, target_or_backend="fake_apollo", shots: int = 2048,
 
     transpiled = transpile_to_IQM(circuit, backend=backend,
                                   optimization_level=optimization_level)
+    n_instr = transpiled.size()
+    if n_instr > RESONANCE_MAX_INSTRUCTIONS:
+        msg = (f"Transpiled circuit has {n_instr} native instructions; IQM Resonance declines "
+               f"jobs with more than {RESONANCE_MAX_INSTRUCTIONS} instructions per circuit. "
+               "Reduce the circuit (fewer qubits / shallower construction) before running it.")
+        if "Fake" in type(backend).__name__:      # local simulator: no cap, but it will be SLOW
+            import warnings
+            warnings.warn(msg + " (running locally anyway)", stacklevel=2)
+        else:
+            raise RuntimeError(msg)
     job = backend.run(transpiled, shots=shots)
-    counts = job.result().get_counts()
+    result = job.result()
+    # Cloud (Resonance) jobs do not raise on failure: they print the error and return an
+    # empty Result. Surface the server's message instead of a confusing empty histogram.
+    err = job.error_message() if hasattr(job, "error_message") else None
+    if err:
+        raise RuntimeError(f"IQM job failed: {err}")
+    counts = result.get_counts()
     return (counts, transpiled) if return_transpiled else counts
