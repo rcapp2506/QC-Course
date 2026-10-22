@@ -32,15 +32,21 @@ OR pass it explicitly:  get_backend("garnet", token="<your-resonance-token>")
 Install the dependencies with:  pip install "qiskit-iqm>=18"
 """
 
-from __future__ import annotations
-import os
+from __future__ import annotations   # lets us write the type hint `str | None` on Python < 3.10
+import os                            # environment variables (os.environ) for the token
 
 RESONANCE_URL = "https://resonance.iqm.tech"
 RESONANCE_MAX_INSTRUCTIONS = 10_000   # server-side cap per circuit (native instructions)
 
 
 def get_backend(target: str = "fake_apollo", token: str | None = None):
-    """Return an IQM Qiskit backend for the requested target (see module docstring)."""
+    """Return an IQM Qiskit backend for the requested target (see module docstring).
+
+    Syntax notes: `target: str = "fake_apollo"` is a type-hinted parameter with a default
+    value; `token: str | None = None` means "a string, or None if not given".
+    The `iqm.qiskit_iqm` imports are done inside the function (lazy imports) so that the
+    module can be imported, and this error message shown, even if qiskit-iqm is missing.
+    """
     # --- Local simulators: no network, no token ---------------------------------
     if target in ("fake_apollo", "fake_adonis"):
         from iqm.qiskit_iqm import IQMFakeApollo, IQMFakeAdonis
@@ -77,7 +83,7 @@ def run_counts(circuit, target_or_backend="fake_apollo", shots: int = 2048,
     from iqm.qiskit_iqm import transpile_to_IQM
 
     backend = target_or_backend
-    if isinstance(target_or_backend, str):
+    if isinstance(target_or_backend, str):           # a target name was given -> build the backend
         backend = get_backend(target_or_backend, token=token)
 
     transpiled = transpile_to_IQM(circuit, backend=backend,
@@ -99,5 +105,5 @@ def run_counts(circuit, target_or_backend="fake_apollo", shots: int = 2048,
     err = job.error_message() if hasattr(job, "error_message") else None
     if err:
         raise RuntimeError(f"IQM job failed: {err}")
-    counts = result.get_counts()
-    return (counts, transpiled) if return_transpiled else counts
+    counts = result.get_counts()                     # dict {'bitstring': number of shots}
+    return (counts, transpiled) if return_transpiled else counts   # conditional expression (ternary)
