@@ -38,6 +38,11 @@ See `IQM/README.md` for the full backend-selection table (local fake sim → clo
 - **`IBM/shor.ipynb` / `IQM/shor.ipynb`** — an enriched, end-to-end Shor's algorithm:
   period finding → order→factor reduction → QPE circuit → continued fractions →
   a robust `shor_factor(N)` → **breaking a toy RSA key**. Verified to run on Qiskit/Aer.
+- **Guided reading.** `shor.ipynb`, `period_finding_and_shor.ipynb`, `RSA example.ipynb` and
+  `IQM/running_on_hardware.ipynb` carry English end-of-line comments on the main syntax, a
+  "🔧 Reading the code" table after every code cell, "📐 Working it out" boxes with the
+  derivations done by hand, circuit drawings (`draw()` helper around `qc.draw("mpl")`) with
+  captions, and "🔬 In-depth analysis" exercises with an empty cell and a reference solution.
 - **`lesson/rsa_shor_lesson.tex`** — the theory behind it, with all theorems stated and
   explained, worked examples, and a step-by-step Shor recipe.
 - **`lesson/RSA_Shor_lecture.pptx`** — 30-slide lecture deck on the same material, with
