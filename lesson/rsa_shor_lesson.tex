@@ -2,7 +2,7 @@
 
 % ----------------------------------------------------------------------------
 %  RSA and Shor's Algorithm — a detailed lesson
-%  Companion to IBM/shor.ipynb (and IQM/shor.ipynb) in the QC-Course repository.
+%  Companion to IBM/16_Shor_Period_Finding_to_RSA.ipynb (and IQM/16_Shor_Period_Finding_to_RSA.ipynb) in the QC-Course repository.
 %  Compile with:  pdflatex rsa_shor_lesson.tex   (twice, for cross-references)
 % ----------------------------------------------------------------------------
 
@@ -48,7 +48,7 @@
 \title{\textbf{RSA and Shor's Algorithm}\\[2pt]
 \large From Number Theory to Quantum Factoring}
 \author{QC-Course 2026 --- lesson notes\\[2pt]
-\small companion to \texttt{IBM/shor.ipynb} and \texttt{IQM/shor.ipynb}}
+\small companion to \texttt{IBM/16\_Shor\_Period\_Finding\_to\_RSA.ipynb} and \texttt{IQM/16\_Shor\_Period\_Finding\_to\_RSA.ipynb}}
 \date{\today}
 
 \begin{document}
@@ -286,7 +286,7 @@ returns the original $m=7$. \checkmark
 \end{example}
 
 \begin{remark}[The textbook ``big'' example]
-The classic RSA example (and the one in \texttt{RSA example.ipynb}) uses $p=61$, $q=53$,
+The classic RSA example (and the one in \texttt{13\_RSA.ipynb}) uses $p=61$, $q=53$,
 so $N=3233$, $\varphi(N)=3120$, $e=17$, $d=2753$. Encrypting $m=65$ gives
 $c=65^{17}\bmod 3233 = 2790$, and $2790^{2753}\bmod 3233 = 65$ again.
 \end{remark}
@@ -482,7 +482,7 @@ Suppose an attacker sees only the public key $(N,e)=(55,3)$ and the ciphertext $
 Running Recipe~S1 on $N=55$ recovers $p=5,q=11$. Then
 $\varphi(N)=40$, $d\equiv 3^{-1}\equiv 27 \pmod{40}$, and
 $m = c^{d}\bmod N = 13^{27}\bmod 55 = 7$. The private key --- and the message --- are
-recovered purely from public data. This is the attack \texttt{shor.ipynb} performs on a
+recovered purely from public data. This is the attack \texttt{16\_Shor\_Period\_Finding\_to\_RSA.ipynb} performs on a
 simulator in its ``breaking RSA'' section.
 \end{example}
 
@@ -519,7 +519,7 @@ factoring or discrete logs --- notably the lattice-based ML-KEM (Kyber) and ML-D
 \section{From the lesson to the notebook}
 % ============================================================================
 
-The companion notebook \texttt{shor.ipynb} realises this lesson cell by cell:
+The companion notebook \texttt{16\_Shor\_Period\_Finding\_to\_RSA.ipynb} realises this lesson cell by cell:
 \begin{itemize}[leftmargin=1.6em,itemsep=1pt,topsep=2pt]
   \item \S2 $\leftrightarrow$ \texttt{factors\_from\_order}: Theorem~\ref{thm:order-factor}
         in code.
@@ -532,8 +532,8 @@ The companion notebook \texttt{shor.ipynb} realises this lesson cell by cell:
   \item Example~\ref{ex:rsa} and the ``breaking RSA'' cell $\leftrightarrow$
         Theorem~\ref{thm:rsa} and Proposition~\ref{prop:phi-fact}.
 \end{itemize}
-Run it on the Aer simulator (\texttt{IBM/shor.ipynb}) or on IQM Garnet/Emerald
-(\texttt{IQM/shor.ipynb}) by changing a single \texttt{TARGET} line.
+Run it on the Aer simulator (\texttt{IBM/16\_Shor\_Period\_Finding\_to\_RSA.ipynb}) or on IQM Garnet/Emerald
+(\texttt{IQM/16\_Shor\_Period\_Finding\_to\_RSA.ipynb}) by changing a single \texttt{TARGET} line.
 
 % ============================================================================
 \section*{Exercises}

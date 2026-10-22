@@ -74,20 +74,13 @@ counts = backend.run(tqc, shots=2048).result().get_counts()
 
 ## Notebooks ported
 
-Fully re-backended to IQM (build → transpile to PRX/CZ → run on Garnet/Emerald):
-
-- `Deutsch-Algorithm.ipynb`
-- `New Deutsch - Jozsa.ipynb`
-- `grover.ipynb`, `grovers-algorithm.ipynb`, `simple_grover.ipynb`
-- `quantum phase estimation.ipynb`
-- `period_finding_and_shor.ipynb`, `shor.ipynb`
-- `teleportation.ipynb`
-- `running_on_hardware.ipynb` (IQM Resonance connection guide)
-
-Framework-neutral construction notebooks (`operators`, `measurement`,
-`circuit-library`, `construct-circuits`, `Classical feedforward and control flow`,
-`saving_to_disk`) build Qiskit circuits that are already backend-agnostic; they carry
-an IQM header cell explaining how to run them on Garnet/Emerald with the helper above.
+The numbering is the same as in `../IBM` (study path in the root `README.md`). Every notebook is
+re-backended to IQM (build → `transpile_to_IQM` to PRX/CZ → run on Garnet/Emerald through
+`run_counts`); the IBM-hardware sections (QiskitRuntimeService, SamplerV2 on a real device) become
+IQM Resonance runs, and the Aer noise models of `06_Aer_Noise_Simulation` are compared with the
+noise model of `IQMFakeApollo`. `07_Running_on_Hardware.ipynb` is the IQM Resonance connection
+guide; `16_Shor_Period_Finding_to_RSA.ipynb` is the companion of `../lesson/`.
+`17_PENNY-QUANV.ipynb` runs its quantum layer on a simulator (PennyLane) and carries an IQM note.
 
 > **Note on circuit size.** IQM Resonance declines any job whose transpiled circuit has
 > more than **10 000 native instructions** (`run_counts` checks this and raises before

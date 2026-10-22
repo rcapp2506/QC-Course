@@ -1,25 +1,27 @@
 # QC-Course — IBM edition
 
-These are the original course notebooks, targeting the **IBM Qiskit** stack
-(`qiskit`, `qiskit-aer`, `qiskit-ibm-runtime`). The parallel `../IQM` folder contains
-the same notebooks re-backended for IQM Garnet/Emerald on IQM Resonance.
+The course notebooks on the **IBM Qiskit** stack (`qiskit` 2.x, `qiskit-aer`,
+`qiskit-ibm-runtime`), numbered in the recommended study order (the table is in the root
+`README.md`). The parallel `../IQM` folder contains the same notebooks re-backended for IQM
+Garnet/Emerald on IQM Resonance, with the same numbering.
 
 ## Setup
 
 ```bash
-pip install qiskit qiskit-aer qiskit-ibm-runtime matplotlib pandas
+pip install qiskit qiskit-aer qiskit-ibm-runtime matplotlib pandas pylatexenc
 ```
 
-Most notebooks run entirely on the local `AerSimulator`, so no account is needed.
-To run on real IBM hardware, see `running_on_hardware.ipynb`.
+Everything except `07_Running_on_Hardware.ipynb` (and the optional hardware sections of 10 and 12)
+runs on the local `AerSimulator`, so no account is needed. To run on real IBM hardware, see
+`07_Running_on_Hardware.ipynb`: accounts authenticate with `channel="ibm_quantum_platform"` and a
+token from https://quantum.cloud.ibm.com/ (the legacy `ibm_quantum` channel was retired in 2025).
 
-## Fixes applied in this folder
+`17_PENNY-QUANV.ipynb` needs `pennylane`, `tensorflow`/`keras` and the MNIST download.
 
-- **Retired `channel="ibm_quantum"`** → updated to `channel="ibm_quantum_platform"`
-  in `grovers-algorithm.ipynb`, `New Deutsch - Jozsa.ipynb`, and
-  `running_on_hardware.ipynb`. The legacy `ibm_quantum` channel (with
-  `instance="ibm-q/open/main"`) was sunset in 2025; accounts now authenticate against
-  the IBM Quantum Platform on IBM Cloud with a token from
-  https://quantum.cloud.ibm.com/ .
+## Provenance
 
-Everything else is preserved as in the upstream course material.
+The notebooks are the "v2.2 enhanced" set of the 2025-26 course (`../qc-2025-26/`, verbatim
+snapshot), renamed `NN_Title.ipynb`; `16_Shor_Period_Finding_to_RSA.ipynb` is the companion of
+`../lesson/`. The guided-reading apparatus (syntax comments, "🔧 Reading the code" tables,
+"📐 Working it out" boxes, captioned drawings, "🔬 In-depth analysis" with reference solutions)
+was added in this edition; the original text of the notebooks is preserved.

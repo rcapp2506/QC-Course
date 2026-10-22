@@ -23,8 +23,8 @@ LIGHTRED = RGBColor(0xFB, 0xE5, 0xE5)
 LINEGREY = RGBColor(0xBF, 0xBF, 0xBF)
 GREEN = RGBColor(0x37, 0x86, 0x3C)
 
-NOTEBOOK_URL = "https://github.com/rcapp2506/QC-Course/blob/main/IBM/shor.ipynb"
-NOTEBOOK_IQM_URL = "https://github.com/rcapp2506/QC-Course/blob/main/IQM/shor.ipynb"
+NOTEBOOK_URL = "https://github.com/rcapp2506/QC-Course/blob/main/IBM/16_Shor_Period_Finding_to_RSA.ipynb"
+NOTEBOOK_IQM_URL = "https://github.com/rcapp2506/QC-Course/blob/main/IQM/16_Shor_Period_Finding_to_RSA.ipynb"
 
 # ----------------------------------------------------------------------------- math
 XSL = etree.XSLT(etree.parse("mml2omml.xsl"))
@@ -284,7 +284,7 @@ def demo_box(slide, x, y, w, h, label, url):
 
 # ============================================================================= SLIDES
 # 1 ---------------------------------------------------------------- title
-s = new_slide("", band=False, notes="Lecture for the Quantum Computing course (MSc Physics). Companion to lesson/rsa_shor_lesson.pdf and the shor.ipynb notebooks (IBM Aer / IQM).")
+s = new_slide("", band=False, notes="Lecture for the Quantum Computing course (MSc Physics). Companion to lesson/rsa_shor_lesson.pdf and the 16_Shor_Period_Finding_to_RSA.ipynb notebooks (IBM Aer / IQM).")
 big = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, Inches(-0.05), prs.slide_width, Inches(3.75))
 big.name = "TitleBand"; big.fill.solid(); big.fill.fore_color.rgb = NAVY; big.line.fill.background()
 etree.SubElement(big._element.spPr, f"{{{A}}}effectLst")
@@ -303,7 +303,7 @@ textbox(s, 0.68, 4.15, 11.98, 1.6, [
 ], color=BLUE)
 textbox(s, 0.68, 5.9, 11.98, 0.9, [
     {"t": "Quantum Computing course 2026-27  ·  Laurea Magistrale in Fisica", "align": "c", "size": 18, "color": GREY},
-    {"t": "Companion material: rsa_shor_lesson.pdf  ·  shor.ipynb (IBM Aer simulator / IQM Garnet & Emerald)", "align": "c", "size": 14, "color": GREY},
+    {"t": "Companion material: rsa_shor_lesson.pdf  ·  16_Shor_Period_Finding_to_RSA.ipynb (IBM Aer simulator / IQM Garnet & Emerald)", "align": "c", "size": 14, "color": GREY},
 ])
 
 # 2 ---------------------------------------------------------------- roadmap
@@ -552,7 +552,7 @@ card(s, 4.75, 1.55, 3.85, 5.4, "Encrypt m = 7", [
     {"t": "CRT: x ≡ 2 (mod 5), x ≡ 7 (mod 11)  ⇒  x = 7  ✓", "bullet": True, "size": 14},
 ], size=16)
 card(s, 8.8, 1.55, 3.85, 5.4, "The textbook ‘big’ example", [
-    {"t": "(RSA example.ipynb in the course repo)", "size": 13, "color": GREY, "after": 6},
+    {"t": "(13_RSA.ipynb in the course repo)", "size": 13, "color": GREY, "after": 6},
     {"t": "p = 61, q = 53 → N = 3233", "bullet": True},
     {"t": "φ(N) = 60 · 52 = 3120", "bullet": True},
     {"t": "e = 17, d = 2753  (17 · 2753 = 46801 = 15·3120 + 1)", "bullet": True},
@@ -663,7 +663,7 @@ card(s, 0.7, 5.5, 11.95, 1.45, "Two facts that make this usable", [
 # 18 --------------------------------------------------------------- QPE circuit
 s = new_slide("Step 2 — the quantum phase estimation circuit", notes="t counting qubits in |+>, work register in |1>, controlled U^(2^j), inverse QFT, measure. The read-out y/2^t approximates s/r. With t ~ 2 log2 N + 1 the estimate is sharp enough for continued fractions. The circuit shown is the notebook's for N = 15, a = 7 with t = 4.")
 picture(s, "assets/qpe_circuit_t4.png", 0.7, 1.5, w=7.4, name="QPEcircuit")
-textbox(s, 0.7, 5.35, 7.4, 0.5, [{"t": "shor.ipynb: build_order_finding_circuit(a=7, n_count=4) for N = 15 — counting register on top, 4-qubit work register below", "align": "c"}], size=12, color=GREY)
+textbox(s, 0.7, 5.35, 7.4, 0.5, [{"t": "16_Shor_Period_Finding_to_RSA.ipynb: build_order_finding_circuit(a=7, n_count=4) for N = 15 — counting register on top, 4-qubit work register below", "align": "c"}], size=12, color=GREY)
 card(s, 8.35, 1.5, 4.3, 4.35, "Reading the circuit", [
     {"t": "t counting qubits → |+⟩^⊗t (Hadamards); work register → |1⟩ (one X)", "bullet": True},
     {"t": "controlled U^(2⁰), U^(2¹), …, U^(2^(t−1)): qubit j picks up the phase e^{2πi s·2^j/r}", "bullet": True},
@@ -720,7 +720,7 @@ card(s, 10.05, 1.55, 2.6, 5.3, "Legend", [
 # 21 --------------------------------------------------------------- example 15 ideal
 s = new_slide("Example: factoring N = 15 with a = 7 on a simulator", notes="Ideal Aer simulation of the notebook circuit with 8 counting qubits: four equally likely outcomes 0, 64, 128, 192 i.e. phases 0, 1/4, 1/2, 3/4. Two of the four outcomes succeed. The histogram is exactly what the notebook shows.")
 picture(s, "assets/hist_ideal.png", 0.7, 1.5, w=6.6, name="HistIdeal")
-textbox(s, 0.7, 4.65, 6.6, 0.5, [{"t": "IBM/shor.ipynb on the Aer simulator — 8 counting qubits, 2048 shots", "align": "c"}], size=12, color=GREY)
+textbox(s, 0.7, 4.65, 6.6, 0.5, [{"t": "IBM/16_Shor_Period_Finding_to_RSA.ipynb on the Aer simulator — 8 counting qubits, 2048 shots", "align": "c"}], size=12, color=GREY)
 card(s, 7.55, 1.5, 5.1, 3.6, "Reading the histogram", [
     {"t": "r = 4 (7¹=7, 7²≡4, 7³≡13, 7⁴≡1), so QPE returns φ ∈ {0, ¼, ½, ¾} with equal probability: register values {0, 64, 128, 192} out of 256.", "after": 6},
     {"t": [("φ = ¾: ", {"bold": True}), ("limit_denominator(15) → 3/4, r = 4 ✓", {})], "bullet": True},
@@ -735,7 +735,7 @@ card(s, 0.7, 5.3, 11.95, 1.65, "Then the classical finish", [
 # 22 --------------------------------------------------------------- noisy hardware
 s = new_slide("The same circuit on a noisy 20-qubit device model", notes="Transpiled to IQM's native PRX + CZ gate set with Garnet's square-lattice connectivity: 12 qubits, about 600 native instructions, depth about 350. The four peaks survive but most shots land elsewhere. shor_factor still succeeds after a few retries. The user can run this on IQM Emerald via the TARGET line.")
 picture(s, "assets/hist_noisy.png", 0.7, 1.5, w=6.6, name="HistNoisy")
-textbox(s, 0.7, 4.65, 6.6, 0.5, [{"t": "IQM/shor.ipynb on fake_apollo — IQM’s noisy model of a 20-qubit Garnet-class chip", "align": "c"}], size=12, color=GREY)
+textbox(s, 0.7, 4.65, 6.6, 0.5, [{"t": "IQM/16_Shor_Period_Finding_to_RSA.ipynb on fake_apollo — IQM’s noisy model of a 20-qubit Garnet-class chip", "align": "c"}], size=12, color=GREY)
 card(s, 7.55, 1.5, 5.1, 3.6, "What the hardware sees", [
     {"t": "Transpiled to the native gate set (PRX + CZ) on a square lattice:", "after": 2},
     {"t": [("12 qubits · ≈ 600 native instructions · depth ≈ 350", {"bold": True, "color": RED})], "after": 6},
@@ -743,14 +743,14 @@ card(s, 7.55, 1.5, 5.1, 3.6, "What the hardware sees", [
     {"t": "shor_factor(15) still succeeds — after a few more retries (continued fractions + the aʳ ≡ 1 check reject the bad samples).", "after": 0},
 ], size=14, fill=LIGHTBLUE)
 card(s, 0.7, 5.3, 11.95, 1.65, "Run it yourself", [
-    {"t": [("One line selects the backend in IQM/shor.ipynb:  ", {}), ('TARGET = "fake_apollo"', {"font": "Courier New", "color": NAVY, "bold": True}), ("  (local noisy simulator)  →  ", {}),
+    {"t": [("One line selects the backend in IQM/16_Shor_Period_Finding_to_RSA.ipynb:  ", {}), ('TARGET = "fake_apollo"', {"font": "Courier New", "color": NAVY, "bold": True}), ("  (local noisy simulator)  →  ", {}),
            ('"garnet"', {"font": "Courier New", "color": NAVY, "bold": True}), (" / ", {}), ('"emerald"', {"font": "Courier New", "color": NAVY, "bold": True}), ("  (real 20- / 54-qubit QPUs on IQM Resonance).", {})], "after": 4},
     {"t": "The ‘:mock’ targets only test the cloud pipeline (they return random bitstrings); verify logic on fake_apollo, then spend QPU credits.", "size": 13, "color": GREY, "after": 0},
 ], size=15)
 
 # 23 --------------------------------------------------------------- breaking RSA
-s = new_slide("Breaking a toy RSA key — and N = 21", notes="End to end: from public data only, Shor recovers p and q, then phi, then d, then the message. This is the last section of shor.ipynb. N = 21 with a = 2 is the second worked example of the lesson.")
-card(s, 0.7, 1.55, 7.2, 5.4, "The attack (shor.ipynb, last section)", [
+s = new_slide("Breaking a toy RSA key — and N = 21", notes="End to end: from public data only, Shor recovers p and q, then phi, then d, then the message. This is the last section of 16_Shor_Period_Finding_to_RSA.ipynb. N = 21 with a = 2 is the second worked example of the lesson.")
+card(s, 0.7, 1.55, 7.2, 5.4, "The attack (16_Shor_Period_Finding_to_RSA.ipynb, last section)", [
     {"t": [("The attacker sees only the public key ", {}), ("(N, e) = (55, 3)", {"bold": True, "color": GREEN}), (" and the cipher-text ", {}), ("c = 13", {"bold": True}), (".", {})], "after": 6},
     {"t": [("1. ", {"bold": True}), ("Run Recipe S1 on N = 55  →  p = 5, q = 11", {})], "after": 3},
     {"t": [("2. ", {"bold": True}), ("φ(N) = 4 · 10 = 40", {})], "after": 3},
@@ -794,7 +794,7 @@ card(s, 0.7, 5.2, 11.95, 1.75, "How the multiplier is built", [
 s = new_slide("Reality check: how far are we from RSA-2048?", notes="Gidney & Ekera 2019: 20 million noisy physical qubits, 8 hours. Gidney 2025 lowered the estimate to under a million noisy qubits running for less than a week. Today's chips: IQM Garnet 20, Emerald 54, the largest superconducting processors around a thousand physical qubits, with error rates that still need heavy error correction. Hence the notebooks factor 15 and 21.")
 stats = [("20 000 000", "noisy physical qubits · 8 hours", "Gidney & Ekerå (2019), RSA-2048", RED),
          ("< 1 000 000", "noisy physical qubits · < 1 week", "Gidney (2025), RSA-2048, improved codes", RED),
-         ("20 / 54", "qubits on IQM Garnet / Emerald", "the machines behind IQM/shor.ipynb", NAVY),
+         ("20 / 54", "qubits on IQM Garnet / Emerald", "the machines behind IQM/16_Shor_Period_Finding_to_RSA.ipynb", NAVY),
          ("≈ 10³", "physical qubits on the largest chips", "no fault-tolerant logical qubits at scale yet", NAVY)]
 for i, (big, lab, src, colr) in enumerate(stats):
     x = 0.7 + i * 3.02
@@ -827,7 +827,7 @@ card(s, 0.7, 5.6, 11.95, 1.35, "What survives, what doesn’t", [
 ], size=14, fill=LIGHT)
 
 # 27 --------------------------------------------------------------- notebook mapping + demo
-s = new_slide("From the lesson to the notebook", notes="Demo time. Each piece of the lecture is a named function in shor.ipynb. Run on the Aer simulator first; the IQM copy switches to Garnet/Emerald with the TARGET line.")
+s = new_slide("From the lesson to the notebook", notes="Demo time. Each piece of the lecture is a named function in 16_Shor_Period_Finding_to_RSA.ipynb. Run on the Aer simulator first; the IQM copy switches to Garnet/Emerald with the TARGET line.")
 rows = [("Order → factors (Step 1)", "factors_from_order(a, r, N)"),
         ("Operator U and QPE circuit (Step 2)", "c_amod15, qft_dagger, build_order_finding_circuit"),
         ("Continued fractions (Step 3)", "best_rational / Fraction.limit_denominator"),
@@ -835,7 +835,7 @@ rows = [("Order → factors (Step 1)", "factors_from_order(a, r, N)"),
         ("RSA key, encryption, attack", "rsa_keygen, rsa_encrypt, ‘breaking RSA’ cell")]
 tb = s.shapes.add_table(len(rows) + 1, 2, Inches(0.7), Inches(1.55), Inches(7.3), Inches(3.3)).table
 tb.columns[0].width = Inches(3.3); tb.columns[1].width = Inches(4.0)
-hdr = ("Lecture", "shor.ipynb")
+hdr = ("Lecture", "16_Shor_Period_Finding_to_RSA.ipynb")
 for c, val in enumerate(hdr):
     cell = tb.cell(0, c); cell.text = ""; _run(cell.text_frame.paragraphs[0], val, size=15, color=WHITE, bold=True)
     cell.fill.solid(); cell.fill.fore_color.rgb = NAVY
@@ -847,8 +847,8 @@ for r, (a_, b_) in enumerate(rows, 1):
 demo_box(s, 8.4, 1.75, 4.25, 1.3, "Demo Shor (IBM Aer)", NOTEBOOK_URL)
 demo_box(s, 8.4, 3.35, 4.25, 1.3, "Demo Shor (IQM)", NOTEBOOK_IQM_URL)
 card(s, 0.7, 5.1, 11.95, 1.85, "How to run", [
-    {"t": [("IBM/shor.ipynb: ", {"bold": True}), ("pip install qiskit qiskit-aer matplotlib pandas — runs entirely on the Aer simulator.", {})], "bullet": True},
-    {"t": [("IQM/shor.ipynb: ", {"bold": True}), ("same notebook; the helper iqm_backend.py transpiles to PRX + CZ and runs on fake_apollo (offline) or, with an IQM Resonance token, on Garnet / Emerald. One TARGET line.", {})], "bullet": True},
+    {"t": [("IBM/16_Shor_Period_Finding_to_RSA.ipynb: ", {"bold": True}), ("pip install qiskit qiskit-aer matplotlib pandas — runs entirely on the Aer simulator.", {})], "bullet": True},
+    {"t": [("IQM/16_Shor_Period_Finding_to_RSA.ipynb: ", {"bold": True}), ("same notebook; the helper iqm_backend.py transpiles to PRX + CZ and runs on fake_apollo (offline) or, with an IQM Resonance token, on Garnet / Emerald. One TARGET line.", {})], "bullet": True},
 ], size=14, fill=LIGHTBLUE)
 
 # 28 --------------------------------------------------------------- exercises
@@ -889,7 +889,7 @@ if END_PIC:
     pic = s.shapes[-1]
     if pic.height > Inches(5.55):
         pic.height = Inches(5.55); pic.width = int(pic.width * 5.55 / (pic.height / E) / E * E) if False else pic.width
-textbox(s, 0.92, 6.98, 11.5, 0.45, [{"t": "Thanks for your attention!   ·   rsa_shor_lesson.pdf · IBM/shor.ipynb · IQM/shor.ipynb", "align": "c"}], size=14, color=BLUE)
+textbox(s, 0.92, 6.98, 11.5, 0.45, [{"t": "Thanks for your attention!   ·   rsa_shor_lesson.pdf · IBM/16_Shor_Period_Finding_to_RSA.ipynb · IQM/16_Shor_Period_Finding_to_RSA.ipynb", "align": "c"}], size=14, color=BLUE)
 
 prs.save(OUT)
 print("saved", OUT, "slides:", len(prs.slides))
