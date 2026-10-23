@@ -13,7 +13,7 @@
    operator, continued-fraction recovery, a step-by-step **recipe**, and worked
    examples factoring 15 and 21 — plus a resource reality check and a post-quantum note.
 
-It is the companion to `../IBM/16_Shor_Period_Finding_to_RSA.ipynb` and `../IQM/16_Shor_Period_Finding_to_RSA.ipynb`; the final section
+It is the companion to `../IBM/22_Shor_Period_Finding_to_RSA.ipynb` and `../IQM/22_Shor_Period_Finding_to_RSA.ipynb`; the final section
 maps each part of the lesson onto specific notebook cells/functions.
 
 ## Build

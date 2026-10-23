@@ -77,10 +77,14 @@ counts = backend.run(tqc, shots=2048).result().get_counts()
 The numbering is the same as in `../IBM` (study path in the root `README.md`). Every notebook is
 re-backended to IQM (build → `transpile_to_IQM` to PRX/CZ → run on Garnet/Emerald through
 `run_counts`); the IBM-hardware sections (QiskitRuntimeService, SamplerV2 on a real device) become
-IQM Resonance runs, and the Aer noise models of `06_Aer_Noise_Simulation` are compared with the
-noise model of `IQMFakeApollo`. `07_Running_on_Hardware.ipynb` is the IQM Resonance connection
-guide; `16_Shor_Period_Finding_to_RSA.ipynb` is the companion of `../lesson/`.
-`17_PENNY-QUANV.ipynb` runs its quantum layer on a simulator (PennyLane) and carries an IQM note.
+IQM Resonance runs, and the Aer noise models of `08_Aer_Noise_Simulation` are compared with the
+noise model of `IQMFakeApollo`. `09_Running_on_Hardware.ipynb` is the IQM Resonance connection
+guide; `22_Shor_Period_Finding_to_RSA.ipynb` is the companion of `../lesson/`.
+Dynamic circuits (`07`, the iterative QPE of `17`) run on Aer also in this folder: IQM hardware
+has no mid-circuit feedforward; the notebooks show the deferred-measurement equivalent on IQM.
+`24_Quantum_Convolutional_Neural_Networks.ipynb` trains on a simulator and evaluates the trained
+model on IQM.
+`23_PENNY-QUANV.ipynb` runs its quantum layer on a simulator (PennyLane) and carries an IQM note.
 
 > **Note on circuit size.** IQM Resonance declines any job whose transpiled circuit has
 > more than **10 000 native instructions** (`run_counts` checks this and raises before

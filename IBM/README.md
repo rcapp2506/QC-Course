@@ -11,17 +11,17 @@ Garnet/Emerald on IQM Resonance, with the same numbering.
 pip install qiskit qiskit-aer qiskit-ibm-runtime matplotlib pandas pylatexenc
 ```
 
-Everything except `07_Running_on_Hardware.ipynb` (and the optional hardware sections of 10 and 12)
+Everything except `09_Running_on_Hardware.ipynb` (and the optional hardware sections of 13 and 17)
 runs on the local `AerSimulator`, so no account is needed. To run on real IBM hardware, see
-`07_Running_on_Hardware.ipynb`: accounts authenticate with `channel="ibm_quantum_platform"` and a
+`09_Running_on_Hardware.ipynb`: accounts authenticate with `channel="ibm_quantum_platform"` and a
 token from https://quantum.cloud.ibm.com/ (the legacy `ibm_quantum` channel was retired in 2025).
 
-`17_PENNY-QUANV.ipynb` needs `pennylane`, `tensorflow`/`keras` and the MNIST download.
+`23_PENNY-QUANV.ipynb` needs `pennylane`, `tensorflow`/`keras` and the MNIST download.
 
 ## Provenance
 
 The notebooks are the "v2.2 enhanced" set of the 2025-26 course (`../qc-2025-26/`, verbatim
-snapshot), renamed `NN_Title.ipynb`; `16_Shor_Period_Finding_to_RSA.ipynb` is the companion of
+snapshot), renamed `NN_Title.ipynb`; `22_Shor_Period_Finding_to_RSA.ipynb` is the companion of
 `../lesson/`. The guided-reading apparatus (syntax comments, "🔧 Reading the code" tables,
 "📐 Working it out" boxes, captioned drawings, "🔬 In-depth analysis" with reference solutions)
 was added in this edition; the original text of the notebooks is preserved.

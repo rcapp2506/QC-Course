@@ -16,3 +16,8 @@ __pycache__/
 _build_shor.py
 _run_nb.py
 _add_notes.py
+
+# files written by the notebooks when they run
+*.qpy
+QUANVOLUTION/
+circuits/
